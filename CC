@@ -1,0 +1,66 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+fc = 10  # Carrier frequency
+fs = 1000  # Sampling frequency
+T = 1  # Symbol duration
+N = fs * T  # Number of samples per symbol
+bits_per_symbol = 4  # For QAM
+
+# Generate random data
+data = np.random.randint(0, 2, 100)
+
+# ASK modulation
+def ask_modulation(data, fc, fs, T):
+    t = np.linspace(0, T, fs*T, endpoint=False)
+    carrier = np.sin(2 * np.pi * fc * t)
+    modulated_signal = np.zeros(len(data) * N)
+    for i, bit in enumerate(data):
+        if bit == 1:
+            modulated_signal[i*N:(i+1)*N] = carrier
+    return modulated_signal
+
+# PSK modulation
+def psk_modulation(data, fc, fs, T):
+    t = np.linspace(0, T, fs*T, endpoint=False)
+    modulated_signal = np.zeros(len(data) * N)
+    for i, bit in enumerate(data):
+        phase = 0 if bit == 0 else np.pi  # Binary PSK
+        carrier = np.sin(2 * np.pi * fc * t + phase)
+        modulated_signal[i*N:(i+1)*N] = carrier
+    return modulated_signal
+
+# QAM modulation
+def qam_modulation(data, fc, fs, T):
+    t = np.linspace(0, T, fs*T, endpoint=False)
+    symbols = np.reshape(data, (-1, bits_per_symbol))
+    modulated_signal = np.zeros(len(symbols) * N)
+    for i, symbol in enumerate(symbols):
+        # Map bits to complex symbols
+        real_part = 2 * symbol[0] - 1
+        imag_part = 2 * symbol[1] - 1
+        complex_symbol = real_part + 1j * imag_part
+        carrier = np.exp(2j * np.pi * fc * t)
+        modulated_signal[i*N:(i+1)*N] = np.real(carrier * complex_symbol)
+    return modulated_signal
+
+# Modulate data using ASK, PSK, and QAM
+ask_signal = ask_modulation(data, fc, fs, T)
+psk_signal = psk_modulation(data, fc, fs, T)
+qam_signal = qam_modulation(data, fc, fs, T)
+
+# Plot modulated signals
+plt.figure(figsize=(12, 6))
+plt.subplot(3, 1, 1)
+plt.plot(ask_signal[:500], label='ASK')
+plt.title('Amplitude Shift Keying (ASK)')
+plt.subplot(3, 1, 2)
+plt.plot(psk_signal[:500], label='PSK')
+plt.title('Phase Shift Keying (PSK)')
+plt.subplot(3, 1, 3)
+plt.plot(qam_signal[:500], label='QAM')
+plt.title('Quadrature Amplitude Modulation (QAM)')
+plt.tight_layout()
+plt.show()
+
